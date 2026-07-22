@@ -6,6 +6,8 @@ from PricingModels.black_scholes import black_scholes_call
 from PricingModels.black_scholes import black_scholes_put
 from PricingModels.binomial import binomial_call
 from PricingModels.binomial import binomial_put
+from PricingModels.monte_carlo import monte_carlo_call
+from PricingModels.monte_carlo import monte_carlo_put
 
 
 class Option:
@@ -50,7 +52,7 @@ class EuropeanCall(Option): # inherits from Option class
         elif method == "binomial":
             return binomial_call(self.S, self.K, self.T, self.sigma, self.r, steps=kwargs.get("steps", 100))
         elif method == "monte_carlo":
-            raise NotImplementedError("Monte Carlo pricing not implemented yet.")
+            return monte_carlo_call(self.S, self.K, self.T, self.sigma, self.r, n_paths=kwargs.get("n_paths", 10000), seed=kwargs.get("seed", None))
         else:
             raise ValueError(f"Unknown pricing method: {method}")
 
@@ -59,12 +61,36 @@ class EuropeanPut(Option):
     A European put option: the right to SELL the underlying
     at strike K, exercisable only at expiration.
     """
-    def price(self, method="black_scholes", **kwargs):
+    def price(self, method = "black_scholes", **kwargs):
         if method == "black_scholes":
             return black_scholes_put(self.S, self.K, self.T, self.sigma, self.r)
         elif method == "binomial":
             return binomial_put(self.S, self.K, self.T, self.sigma, self.r, steps=kwargs.get("steps", 100))
         elif method == "monte_carlo":
-            raise NotImplementedError("Monte Carlo pricing not implemented yet.")
+            return monte_carlo_put(self.S, self.K, self.T, self.sigma, self.r, n_paths=kwargs.get("n_paths", 10000), seed=kwargs.get("seed", None))
+        else:
+            raise ValueError(f"Unknown pricing method: {method}")
+
+class AmericanCall(Option):
+
+    def price(self, method = "binomial", **kwargs):
+        if method == "black_scholes":
+            raise ValueError("Black-Scholes has no closed-form solution for American options")
+        elif method == "binomial":
+            return binomial_call(self.S, self.K, self.T, self.sigma, self.r, steps=kwargs.get("steps", 100), american = True)
+        elif method == "monte_carlo":
+            raise NotImplementedError("Monte Carlo pricing not implemented yet for American options.")
+        else:
+            raise ValueError(f"Unknown pricing method: {method}")
+
+class AmericanPut(Option):
+
+    def price(self, method = "binomial", **kwargs):
+        if method == "black_scholes":
+            raise ValueError("Black-Scholes has no closed-form solution for American options")
+        elif method == "binomial":
+            return binomial_put(self.S, self.K, self.T, self.sigma, self.r, steps=kwargs.get("steps", 100), american = True)
+        elif method == "monte_carlo":
+            raise NotImplementedError("Monte Carlo pricing not implemented yet for American options.")
         else:
             raise ValueError(f"Unknown pricing method: {method}")
