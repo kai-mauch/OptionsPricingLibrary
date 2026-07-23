@@ -8,6 +8,7 @@ from PricingModels.binomial import binomial_call
 from PricingModels.binomial import binomial_put
 from PricingModels.monte_carlo import monte_carlo_call
 from PricingModels.monte_carlo import monte_carlo_put
+from greeks import black_scholes_greeks, numerical_greeks
 
 
 class Option:
@@ -39,12 +40,20 @@ class Option:
         """
         raise NotImplementedError("Subclasses must implement price().")
 
+    def greeks(self, method="black_scholes", **kwargs):
+        if method == "black_scholes":
+            self.price(method="black_scholes")  # reuses existing validation
+            return black_scholes_greeks(self.S, self.K, self.T, self.sigma, self.r,
+                                        option_type=self.option_type)
+        else:
+            return numerical_greeks(self, method=method, **kwargs)
 
 class EuropeanCall(Option): # inherits from Option class
     """
     A European call option: the right (not obligation) to BUY the
     underlying at strike K, exercisable only at expiry T.
     """
+    option_type = "call"
 
     def price(self, method="black_scholes", **kwargs):
         if method == "black_scholes":
@@ -61,6 +70,7 @@ class EuropeanPut(Option):
     A European put option: the right to SELL the underlying
     at strike K, exercisable only at expiration.
     """
+    option_type = "put"
     def price(self, method = "black_scholes", **kwargs):
         if method == "black_scholes":
             return black_scholes_put(self.S, self.K, self.T, self.sigma, self.r)
@@ -72,7 +82,7 @@ class EuropeanPut(Option):
             raise ValueError(f"Unknown pricing method: {method}")
 
 class AmericanCall(Option):
-
+    option_type = "call"
     def price(self, method = "binomial", **kwargs):
         if method == "black_scholes":
             raise ValueError("Black-Scholes has no closed-form solution for American options")
@@ -84,7 +94,7 @@ class AmericanCall(Option):
             raise ValueError(f"Unknown pricing method: {method}")
 
 class AmericanPut(Option):
-
+    option_type = "put"
     def price(self, method = "binomial", **kwargs):
         if method == "black_scholes":
             raise ValueError("Black-Scholes has no closed-form solution for American options")
